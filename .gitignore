@@ -1,0 +1,3 @@
+# Uploaded media is runtime content and should not be versioned.
+uploads/*
+!uploads/index.html

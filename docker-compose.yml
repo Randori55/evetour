@@ -1,0 +1,34 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: travel_site
+      MYSQL_USER: travel
+      MYSQL_PASSWORD: travelpass
+      MYSQL_ROOT_PASSWORD: rootpass
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u root -prootpass --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  web:
+    build: .
+    ports:
+      - "8088:80"
+    environment:
+      DB_HOST: db
+      DB_NAME: travel_site
+      DB_USER: travel
+      DB_PASS: travelpass
+    volumes:
+      - ./uploads:/var/www/html/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  mysql_data:

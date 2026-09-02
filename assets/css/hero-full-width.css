@@ -1,0 +1,33 @@
+/* Keep the uploaded hero background flush with both edges of the viewport. */
+.hero{
+  width:100vw;
+  max-width:100vw;
+  margin-left:calc(50% - 50vw);
+  margin-right:calc(50% - 50vw);
+}
+
+.hero-image{
+  width:100%;
+  height:100%;
+  background-size:cover;
+  background-position:center center;
+  background-repeat:no-repeat;
+}
+
+/* Use part of the former side whitespace for a more spacious tours grid. */
+#tours{width:min(1400px,96%);}
+
+/* Display up to twelve tours as two rows of six on desktop. */
+.tour-grid{grid-template-columns:repeat(6,minmax(0,1fr));align-items:stretch;}
+.tour{height:100%;display:flex;flex-direction:column;min-width:0;}
+.tour-img{height:auto;aspect-ratio:1.15/1;flex:none;}
+.tour-body{flex:1;min-width:0;}
+.tour p{min-height:0;overflow-wrap:anywhere;white-space:pre-line;}
+
+@media(max-width:900px){
+  .tour-grid{grid-template-columns:repeat(3,minmax(0,1fr));}
+}
+
+@media(max-width:600px){
+  .tour-grid{grid-template-columns:1fr;}
+}

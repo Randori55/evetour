@@ -1,0 +1,256 @@
+/* =========================
+   REVIEWS
+   ========================= */
+
+.reviews {
+    width: 100%;
+    max-width: none;
+    background: #fff;
+    padding: 90px 0 100px;
+    overflow: hidden;
+}
+
+.reviews .section-title {
+    text-align: center;
+    margin-bottom: 45px;
+}
+
+.reviews .section-title span {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    font-weight: 700;
+    color: #c5a36a;
+}
+
+.reviews .section-title h2 {
+    margin: 12px 0 0;
+    font-size: 38px;
+    font-weight: 500;
+    color: #17201c;
+}
+
+
+/* =========================
+   SLIDER
+   ========================= */
+
+.reviews-slider {
+    width: 100%;
+    position: relative;
+    display: block;
+}
+
+.review-viewport {
+    width: 100%;
+    overflow: hidden;
+}
+
+.review-track {
+    display: flex;
+    gap: 18px;
+
+    width: max-content;
+
+    transition: transform 1.2s ease-in-out;
+
+    will-change: transform;
+}
+
+
+/* =========================
+   IMAGE
+   ========================= */
+
+.reviews-slider .review {
+    flex: 0 0 220px;
+    height: 180px;
+
+    padding: 0;
+    margin: 0;
+
+    border: none !important;
+    outline: none !important;
+    border-radius: 0 !important;
+
+    overflow: hidden;
+
+    background: transparent;
+    box-shadow: none !important;
+}
+
+.reviews-slider .review img {
+    display: block;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+    object-position: center;
+
+    border: none;
+    outline: none;
+
+    border-radius: 0;
+
+    box-shadow: none;
+
+    transition: transform .5s ease;
+}
+
+
+/* =========================
+   HOVER
+   ========================= */
+
+.reviews-slider .review:hover img {
+    transform: scale(1.02);
+}
+
+
+/* =========================
+   ARROWS
+   ========================= */
+
+.review-arrow {
+    position: absolute;
+
+    top: 50%;
+    transform: translateY(-50%);
+
+    z-index: 10;
+
+    width: 52px;
+    height: 52px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+
+    background: rgba(255,255,255,.9);
+
+    color: #17201c;
+
+    font-size: 22px;
+
+    cursor: pointer;
+
+    box-shadow: 0 5px 20px rgba(0,0,0,.12);
+
+    transition: all .25s ease;
+}
+
+.review-arrow-prev {
+    left: 25px;
+}
+
+.review-arrow-next {
+    right: 25px;
+}
+
+.review-arrow:hover:not(:disabled) {
+    transform: translateY(-50%) scale(1.08);
+}
+
+.review-arrow:disabled {
+    opacity: .25;
+    cursor: default;
+}
+
+
+/* =========================
+   DOTS
+   ========================= */
+
+.review-dots {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    margin-top: 25px;
+}
+
+.review-dot {
+    width: 7px;
+    height: 7px;
+
+    padding: 0;
+
+    border: none;
+
+    border-radius: 50%;
+
+    background: #d5d5d5;
+
+    cursor: pointer;
+}
+
+.review-dot.is-active {
+    width: 22px;
+
+    border-radius: 10px;
+
+    background: #c5a36a;
+}
+
+
+/* =========================
+   TABLET
+   ========================= */
+
+@media(max-width:1100px) {
+
+    .reviews-slider .review {
+        flex-basis: 200px;
+        height: 165px;
+    }
+
+}
+
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media(max-width:600px) {
+
+    .reviews {
+        padding: 65px 0 70px;
+    }
+
+    .reviews .section-title {
+        padding: 0 5%;
+    }
+
+    .reviews .section-title h2 {
+        font-size: 30px;
+    }
+
+    .review-track {
+        gap: 12px;
+    }
+
+    .reviews-slider .review {
+    flex-basis: 180px;
+    height: 150px;
+    }
+
+    .review-arrow {
+        width: 42px;
+        height: 42px;
+    }
+
+    .review-arrow-prev {
+        left: 10px;
+    }
+
+    .review-arrow-next {
+        right: 10px;
+    }
+
+}

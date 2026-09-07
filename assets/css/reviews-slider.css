@@ -49,14 +49,12 @@
 .review-track {
     display: flex;
     gap: 18px;
-
     width: max-content;
 
-    transition: transform 1.2s ease-in-out;
-
     will-change: transform;
-}
 
+    transition: none;
+}
 
 /* =========================
    IMAGE
@@ -253,4 +251,36 @@
         right: 10px;
     }
 
+ 
+
+
+/* Mouse cursor normal qalsın */
+.review-viewport {
+    cursor: default;
+    user-select: none;
+}
+
+/* Hover zamanı şəkil 2 dəfə böyüsün */
+.reviews-slider .review {
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+}
+
+.reviews-slider .review img {
+    position: relative;
+    z-index: 1;
+    transform: scale(1);
+    transition: transform 0.4s ease;
+}
+
+/* Mouse şəkilin üzərinə gələndə 2x böyüsün */
+.reviews-slider .review:hover {
+    z-index: 100;
+}
+
+.reviews-slider .review:hover img {
+    transform: scale(2);
+    z-index: 100;
+}
 }

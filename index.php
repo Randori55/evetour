@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     /* =========================
-       REVIEWS SLIDER
+       REVIEWS INFINITE CAROUSEL
        ========================= */
 
     const viewport = document.querySelector('.review-viewport');
@@ -74,14 +74,54 @@ document.addEventListener('DOMContentLoaded', function () {
     const previous = document.querySelector('.review-arrow-prev');
     const next = document.querySelector('.review-arrow-next');
 
-    if (!viewport || !track || !previous || !next) {
+    if (!viewport || !track) {
+        return;
+    }
+
+    /* Original şəkilləri götürürük */
+
+    const originalCards = [...track.querySelectorAll('.review')];
+
+    if (originalCards.length <= 1) {
         return;
     }
 
 
-    /* Bir şəkildən digərinə keçid məsafəsi */
+    /* Şəkillərin kopyalarını yaradırıq.
+       Beləliklə sonsuz karusel effekti alınır. */
 
-    const step = function () {
+    originalCards.forEach(function (card) {
+
+        const clone = card.cloneNode(true);
+
+        clone.setAttribute('aria-hidden', 'true');
+
+        track.appendChild(clone);
+
+    });
+
+
+    /* =========================
+       AUTO MOVEMENT
+       ========================= */
+
+    let position = 0;
+
+    let isDragging = false;
+
+    let startX = 0;
+    let startPosition = 0;
+
+    let animationFrame;
+
+    /* Sürət.
+       Kiçik rəqəm = daha yavaş
+       Böyük rəqəm = daha sürətli */
+
+    const speed = 1.05;
+
+
+    function getCardWidth() {
 
         const card = track.querySelector('.review');
 
@@ -93,121 +133,237 @@ document.addEventListener('DOMContentLoaded', function () {
             parseFloat(getComputedStyle(track).gap) || 0;
 
         return card.getBoundingClientRect().width + gap;
-    };
+
+    }
 
 
-    /* Oxların vəziyyəti */
+    function getLoopWidth() {
 
-    const update = function () {
+        return getCardWidth() * originalCards.length;
 
-        const max =
-            viewport.scrollWidth - viewport.clientWidth;
-
-        previous.disabled =
-            viewport.scrollLeft <= 1;
-
-        next.disabled =
-            viewport.scrollLeft >= max - 1;
-
-    };
+    }
 
 
-    /* SOL OX */
+    function render() {
 
-    previous.addEventListener('click', function () {
+        track.style.transform =
+            `translate3d(${-position}px, 0, 0)`;
 
-        viewport.scrollBy({
-            left: -step(),
-            behavior: 'smooth'
-        });
+    }
+
+
+    function animate() {
+
+        if (!isDragging) {
+
+            position += speed;
+
+            const loopWidth = getLoopWidth();
+
+            if (position >= loopWidth) {
+                position -= loopWidth;
+            }
+
+            render();
+
+        }
+
+        animationFrame =
+            requestAnimationFrame(animate);
+
+    }
+
+
+    /* Başlat */
+
+    animate();
+
+
+    /* =========================
+       MOUSE DRAG
+       ========================= */
+
+    viewport.addEventListener('mousedown', function (event) {
+
+        isDragging = true;
+
+        startX = event.clientX;
+
+        startPosition = position;
+
+        viewport.classList.add('is-dragging');
 
     });
 
 
-    /* SAĞ OX */
+    document.addEventListener('mousemove', function (event) {
 
-    next.addEventListener('click', function () {
+        if (!isDragging) {
+            return;
+        }
 
-        viewport.scrollBy({
-            left: step(),
-            behavior: 'smooth'
-        });
+        const distance =
+            startX - event.clientX;
+
+        position = startPosition + distance;
+
+        const loopWidth = getLoopWidth();
+
+        while (position < 0) {
+            position += loopWidth;
+        }
+
+        while (position >= loopWidth) {
+            position -= loopWidth;
+        }
+
+        render();
+
+    });
+
+
+    document.addEventListener('mouseup', function () {
+
+        if (!isDragging) {
+            return;
+        }
+
+        isDragging = false;
+
+        viewport.classList.remove('is-dragging');
 
     });
 
 
     /* =========================
-       AUTO SLIDER
+       TOUCH / MOBILE
        ========================= */
 
-    let autoSlide;
+    viewport.addEventListener(
+        'touchstart',
+        function (event) {
 
-    function startAutoSlide() {
+            isDragging = true;
 
-        clearInterval(autoSlide);
+            startX =
+                event.touches[0].clientX;
 
-        autoSlide = setInterval(function () {
+            startPosition = position;
 
-            const max =
-                viewport.scrollWidth - viewport.clientWidth;
+        },
+        { passive: true }
+    );
 
-            if (max <= 0) {
+
+    viewport.addEventListener(
+        'touchmove',
+        function (event) {
+
+            if (!isDragging) {
                 return;
             }
 
-            if (viewport.scrollLeft >= max - 5) {
+            const distance =
+                startX -
+                event.touches[0].clientX;
 
-                viewport.scrollTo({
-                    left: 0,
-                    behavior: 'smooth'
-                });
+            position =
+                startPosition + distance;
 
-            } else {
+            const loopWidth = getLoopWidth();
 
-                viewport.scrollBy({
-                    left: step(),
-                    behavior: 'smooth'
-                });
-
+            while (position < 0) {
+                position += loopWidth;
             }
 
-        }, 4000);
+            while (position >= loopWidth) {
+                position -= loopWidth;
+            }
+
+            render();
+
+        },
+        { passive: true }
+    );
+
+
+    viewport.addEventListener(
+        'touchend',
+        function () {
+
+            isDragging = false;
+
+        }
+    );
+
+
+    /* =========================
+       ARROWS
+       ========================= */
+
+    if (previous) {
+
+        previous.addEventListener(
+            'click',
+            function () {
+
+                position -= getCardWidth();
+
+                const loopWidth = getLoopWidth();
+
+                while (position < 0) {
+                    position += loopWidth;
+                }
+
+                render();
+
+            }
+        );
 
     }
 
 
-    startAutoSlide();
+    if (next) {
+
+        next.addEventListener(
+            'click',
+            function () {
+
+                position += getCardWidth();
+
+                const loopWidth = getLoopWidth();
+
+                if (position >= loopWidth) {
+                    position -= loopWidth;
+                }
+
+                render();
+
+            }
+        );
+
+    }
 
 
-    /* Mouse üstünə gələndə dayansın */
+    /* =========================
+       RESIZE
+       ========================= */
 
-    viewport.addEventListener('mouseenter', function () {
-        clearInterval(autoSlide);
+    window.addEventListener('resize', function () {
+
+        const loopWidth = getLoopWidth();
+
+        if (loopWidth > 0 && position >= loopWidth) {
+            position %= loopWidth;
+        }
+
+        render();
+
     });
-
-
-    /* Mouse çıxanda davam etsin */
-
-    viewport.addEventListener('mouseleave', function () {
-        startAutoSlide();
-    });
-
-
-    viewport.addEventListener(
-        'scroll',
-        update,
-        { passive: true }
-    );
-
-    window.addEventListener(
-        'resize',
-        update
-    );
-
-    update();
 
 });
 </script>
 
 
-<?php if(count($heroSlides)>1):?><script>const heroSlides=<?=json_encode(array_values($heroSlides),JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT)?>;let heroImageIndex=0;setInterval(()=>{heroImageIndex=(heroImageIndex+1)%heroSlides.length;const slide=heroSlides[heroImageIndex],hero=document.getElementById('hero-image');hero.style.backgroundImage=`url("${slide.image}")`;hero.style.backgroundPosition=`${slide.x}% ${slide.y}%`;},3000);</script><?php endif;?></body></html>
+<?php if(count($heroSlides)>1):?><script>const heroSlides=<?=json_encode(array_values($heroSlides),JSON_HEX_TAG|JSON_HEX_APOS|JSON_HEX_AMP|JSON_HEX_QUOT)?>;let heroImageIndex=0;setInterval(()=>{heroImageIndex=(heroImageIndex+1)%heroSlides.length;const slide=heroSlides[heroImageIndex],hero=document.getElementById('hero-image');hero.style.backgroundImage=`url("${slide.image}")`;hero.style.backgroundPosition=`${slide.x}% ${slide.y}%`;},3000);</script><?php endif;?>
+</body></html>

@@ -1,8 +1,5 @@
 FROM php:8.3-apache
-
-# Init script dosyasını kopyala
-COPY ./db/init.sql /docker-entrypoint-initdb.d/init.sql
-
+# Conflicting MPM modules'ı devre dışı bırak
 RUN a2dismod mpm_event mpm_worker || true
 RUN a2enmod mpm_prefork rewrite
 RUN docker-php-ext-install pdo pdo_mysql

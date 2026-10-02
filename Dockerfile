@@ -1,4 +1,5 @@
-FROM php:8.3-apache
+FROM php:8.3-cli-alpine
+RUN apk add --no-cache apache2 apache2-mod-php
 
 # Apache modülleri tamamen sıfırla
 RUN rm -f /etc/apache2/mods-enabled/mpm_*.load

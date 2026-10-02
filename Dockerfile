@@ -1,19 +1,18 @@
-FROM php:8.3-cli-alpine
-RUN apk add --no-cache apache2 apache2-mod-php
+FROM php:8.3-apache
 
-# Apache modülleri tamamen sıfırla
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load
-RUN a2dismod mpm_event mpm_prefork mpm_worker || true
-
-# Sadece mpm_prefork'u yükle
+# Apache modüllerini düzelt
+RUN a2dismod mpm_event mpm_worker || true
 RUN a2enmod mpm_prefork rewrite
 
 # PHP extensions
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Config
+# Config dosyası
 COPY php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
+# Uygulama
 WORKDIR /var/www/html
 COPY . /var/www/html/
+
+# İzinler
 RUN chown -R www-data:www-data /var/www/html/uploads

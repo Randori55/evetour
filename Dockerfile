@@ -14,6 +14,7 @@ COPY . /var/www/html/
 
 RUN chown -R www-data:www-data /var/www/html/uploads
 
-EXPOSE 8000
+RUN sed -i 's/Listen 80/Listen 8000/' /etc/apache2/ports.conf
+RUN sed -i 's/:80>/:8000>/' /etc/apache2/sites-enabled/000-default.conf
 
-CMD ["bash", "-lc", "a2dismod mpm_event mpm_worker || true; rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*; a2enmod mpm_prefork; sed -i \"s/^Listen 80$/Listen ${PORT:-8000}/\" /etc/apache2/ports.conf; sed -i \"s/:80>/:${PORT:-8000}>/g\" /etc/apache2/sites-enabled/000-default.conf; apache2ctl -t; exec apache2-foreground"]
+EXPOSE 8000

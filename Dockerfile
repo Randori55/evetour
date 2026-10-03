@@ -2,6 +2,8 @@ FROM php:8.3-apache
 
 RUN docker-php-ext-install pdo pdo_mysql
 RUN a2enmod rewrite
+RUN a2dismod mpm_event mpm_worker || true
+RUN a2enmod mpm_prefork
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 COPY php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
@@ -11,4 +13,4 @@ COPY . /var/www/html/
 
 RUN chown -R www-data:www-data /var/www/html/uploads
 
-CMD ["bash", "-c", "a2dismod mpm_event mpm_worker >/dev/null 2>&1 || true; rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*; a2enmod mpm_prefork >/dev/null 2>&1; sed -ri \"s/Listen [0-9]+/Listen ${PORT:-8080}/\" /etc/apache2/ports.conf; sed -ri \"s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-8080}>/\" /etc/apache2/sites-enabled/000-default.conf; apache2ctl -t; exec apache2-foreground"]
+CMD ["bash", "-c", "sed -ri 's/Listen [0-9]+/Listen ${PORT:-8080}/' /etc/apache2/ports.conf && sed -ri 's/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-8080}>/' /etc/apache2/sites-enabled/000-default.conf && apache2ctl -t && exec apache2-foreground"]

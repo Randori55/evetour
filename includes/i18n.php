@@ -1,4 +1,3 @@
-@'
 <?php
 /** Public interface translations. English and Russian only. */
 
@@ -82,4 +81,3 @@ function tr(string $key, ?string $fallback = null): string
         ?? $fallback
         ?? $key;
 }
-'@ | Set-Content -Path .\includes\i18n.php -Encoding utf8

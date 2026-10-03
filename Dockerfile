@@ -1,21 +1,14 @@
 FROM php:8.3-apache
 
 RUN docker-php-ext-install pdo pdo_mysql
-
 RUN a2enmod rewrite
-
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 COPY php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
 WORKDIR /var/www/html
-
 COPY . /var/www/html/
 
 RUN chown -R www-data:www-data /var/www/html/uploads
 
-RUN sed -i 's/Listen 80/Listen 8000/' /etc/apache2/ports.conf
-
-RUN sed -i 's/:80>/:8000>/' /etc/apache2/sites-enabled/000-default.conf
-
-EXPOSE 8000
+CMD ["bash", "-c", "a2dismod mpm_event mpm_worker >/dev/null 2>&1 || true; rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.*; a2enmod mpm_prefork >/dev/null 2>&1; sed -ri \"s/Listen [0-9]+/Listen ${PORT:-8080}/\" /etc/apache2/ports.conf; sed -ri \"s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-8080}>/\" /etc/apache2/sites-enabled/000-default.conf; apache2ctl -t; exec apache2-foreground"]

@@ -12,4 +12,4 @@ COPY . /var/www/html/
 
 RUN chown -R www-data:www-data /var/www/html/uploads
 
-CMD ["bash", "-c", "rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf && a2enmod mpm_prefork && sed -ri 's/Listen [0-9]+/Listen ${PORT:-8080}/' /etc/apache2/ports.conf && sed -ri 's/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${PORT:-8080}>/' /etc/apache2/sites-enabled/000-default.conf && apache2ctl -t && exec apache2-foreground"]
+CMD ["bash", "-c", "rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf && a2enmod mpm_prefork && sed -ri \"s/Listen [0-9]+/Listen ${PORT:-8080}/\" /etc/apache2/ports.conf && sed -ri \"s/<VirtualHost \\\\*:[0-9]+>/<VirtualHost *:${PORT:-8080}>/\" /etc/apache2/sites-enabled/000-default.conf && apache2ctl -t && exec apache2-foreground"]

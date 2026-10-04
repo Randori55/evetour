@@ -49,9 +49,9 @@ try {
 
     foreach ($columns as $table => $tableColumns) {
         foreach ($tableColumns as $column => $definition) {
-            $check = $pdo->prepare("SHOW COLUMNS FROM `{$table}` LIKE ?");
-            $check->execute([$column]);
-            if (!$check->fetch()) {
+            $check = $pdo->prepare('SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ? AND COLUMN_NAME = ?');
+            $check->execute([$table, $column]);
+            if ((int)$check->fetchColumn() === 0) {
                 $pdo->exec("ALTER TABLE `{$table}` ADD COLUMN `{$column}` {$definition}");
             }
         }

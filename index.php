@@ -37,8 +37,8 @@ unset($tour);
 $reviews=$pdo->query('SELECT * FROM reviews ORDER BY sort_order,id')->fetchAll();
 
 ?>
-<!doctype html><html lang="<?=e($locale)?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e(setting('site_name'))?></title><link rel="stylesheet" href="assets/css/style.css"><link rel="stylesheet" href="assets/css/hero-full-width.css"><link rel="stylesheet" href="assets/css/reviews-slider.css"></head><body>
-<header><div class="nav"><a class="logo" href="#about"><span class="logo-mark">E</span><?=e(setting('site_name'))?></a><nav><a href="#about"><?=e(tr('about'))?></a><a href="#tours"><?=e(tr('tours'))?></a><a href="#reviews"><?=e(tr('reviews'))?></a><a href="#contact"><?=e(tr('contact'))?></a></nav><div class="nav-actions"><div class="language-switcher"><?php foreach(supported_locales() as $code=>$label):?><a class="<?=$locale===$code?'active':''?>" href="?lang=<?=e($code)?>"><?=e($label)?></a><?php endforeach;?></div><a class="navbtn" href="#contact"><?=e(tr('book_now'))?></a></div></div></header><main>
+<!doctype html><html lang="<?=e($locale)?>"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title><?=e(setting('site_name'))?></title><link rel="stylesheet" href="assets/css/style.css?v=20261005"><link rel="stylesheet" href="assets/css/hero-full-width.css?v=20261005"><link rel="stylesheet" href="assets/css/reviews-slider.css?v=20261005"></head><body>
+<header><div class="nav"><a class="logo" href="#about"><img class="site-logo" src="assets/img/logo-mark.png" alt="<?=e(setting('site_name'))?>"><span class="brand-name"><?=e(setting('site_name'))?></span></a><nav><a href="#about"><?=e(tr('about'))?></a><a href="#tours"><?=e(tr('tours'))?></a><a href="#reviews"><?=e(tr('reviews'))?></a><a href="#contact"><?=e(tr('contact'))?></a></nav><div class="nav-actions"><div class="language-switcher"><?php foreach(supported_locales() as $code=>$label):?><a class="<?=$locale===$code?'active':''?>" href="?lang=<?=e($code)?>"><?=e($label)?></a><?php endforeach;?></div><a class="navbtn" href="#contact"><?=e(tr('book_now'))?></a></div></div></header><main>
 
     <section id="about" class="hero"><div class="hero-image" id="hero-image" style="background-image:url('<?=e($heroSlides[0]['image'])?>');background-position:<?=$heroSlides[0]['x']?>% <?=$heroSlides[0]['y']?>%"></div><div class="hero-overlay"></div><div class="hero-content"><span class="eyebrow"><?=e(setting('hero_eyebrow','PRIVATE TRAVEL • LOCAL EXPERIENCES'))?></span>
     <h1><?=e($aboutTitle)?></h1>
@@ -49,7 +49,7 @@ $reviews=$pdo->query('SELECT * FROM reviews ORDER BY sort_order,id')->fetchAll()
     <h3><?=e($t['display_title'])?></h3>
 <p><?=e($t['display_description'])?></p>
     <?php if($t['price']):?><b><?=e($t['price'])?></b><?php endif;?></div></article><?php endforeach;?></div></section>
-<section id="reviews" class="section reviews"><div class="section-title"><span>Feedbacks - our reviews</span><h2>What our guests say</h2></div><div class="reviews-slider"><button class="review-arrow review-arrow-prev" type="button" aria-label="Previous review">←</button><div class="review-viewport"><div class="review-track"><?php foreach($reviews as $r): ?><article class="review"><img src="<?=e($r['image'] ?: 'assets/img/avatar.svg')?>" alt="Review image" loading="lazy"></article><?php endforeach;?></div></div><button class="review-arrow review-arrow-next" type="button" aria-label="Next review">→</button></div></section>
+<section id="reviews" class="section reviews"><div class="section-title"><span>Feedbacks - our reviews</span><h2>What our guests say</h2></div><div class="reviews-slider"><button class="review-arrow review-arrow-prev" type="button" aria-label="Previous review">←</button><div class="review-viewport"><div class="review-track"><?php foreach($reviews as $r): ?><article class="review"><img src="<?=e($r['image'] ?: 'assets/img/avatar.svg')?>" alt="Review image" loading="eager" decoding="async"></article><?php endforeach;?></div></div><button class="review-arrow review-arrow-next" type="button" aria-label="Next review">→</button></div></section>
 <section id="contact" class="contact"><div><span class="eyebrow">CONTACT</span><h2>Let's plan your next trip.</h2><p>Send us your wishes and we'll prepare a personal proposal.</p></div><form method="post" action="contact.php"><input name="name" placeholder="Your name" required><input name="email" type="email" placeholder="Email" required><textarea name="message" rows="5" placeholder="Tell us about your trip" required></textarea><button class="btn">Send request</button></form></section></main><footer><div><?=e(setting('site_name'))?></div><div><?=e(setting('email'))?> · <?=e(setting('phone'))?></div></footer>
 
 <script>
@@ -166,12 +166,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let startPosition = 0;
 
     let animationFrame;
+    let lastFrameTime = null;
 
-    /* Sürət.
-       Kiçik rəqəm = daha yavaş
-       Böyük rəqəm = daha sürətli */
-
-    const speed = 1.05;
+    // CSS pixels per second keep the motion consistent across display refresh rates.
+    const speed = 42;
 
 
     function getCardWidth() {
@@ -197,39 +195,49 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
 
-    function render() {
+    function normalizePosition() {
 
-        track.style.transform =
-            `translate3d(${-position}px, 0, 0)`;
+        const loopWidth = getLoopWidth();
+
+        if (loopWidth > 0) {
+            position = ((position % loopWidth) + loopWidth) % loopWidth;
+        }
 
     }
 
 
-    function animate() {
+    function render() {
+
+        const deviceScale = window.devicePixelRatio || 1;
+        const crispPosition = Math.round(position * deviceScale) / deviceScale;
+        track.style.transform = `translateX(${-crispPosition}px)`;
+
+    }
+
+
+    function animate(timestamp) {
+
+        const elapsed = lastFrameTime === null
+            ? 0
+            : Math.min((timestamp - lastFrameTime) / 1000, 0.05);
+        lastFrameTime = timestamp;
 
         if (!isDragging) {
 
-            position += speed;
-
-            const loopWidth = getLoopWidth();
-
-            if (position >= loopWidth) {
-                position -= loopWidth;
-            }
-
+            position += speed * elapsed;
+            normalizePosition();
             render();
 
         }
 
-        animationFrame =
-            requestAnimationFrame(animate);
+        animationFrame = requestAnimationFrame(animate);
 
     }
 
 
     /* Başlat */
 
-    animate();
+    requestAnimationFrame(animate);
 
 
     /* =========================

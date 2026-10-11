@@ -2,3 +2,5 @@
 uploads/*
 !uploads/index.html
 backup.sql
+
+/vendor/

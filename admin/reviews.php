@@ -10,7 +10,9 @@ if(isset($_GET['edit'])){
   $edit=$st->fetch();
 }
 if(isset($_GET['delete'])){
-  $pdo->prepare('DELETE FROM reviews WHERE id=?')->execute([(int)$_GET['delete']]);
+  $id=(int)$_GET['delete'];$st=$pdo->prepare('SELECT image FROM reviews WHERE id=?');$st->execute([$id]);$path=$st->fetchColumn();
+  if($path!==false)delete_stored_image($path);
+  $pdo->prepare('DELETE FROM reviews WHERE id=?')->execute([$id]);
   header('Location:reviews.php');
   exit;
 }

@@ -3,7 +3,7 @@ require __DIR__.'/../includes/functions.php';
 admin_required();
 $edit=null;$msg='';
 if(isset($_GET['edit'])){$st=$pdo->prepare('SELECT * FROM tours WHERE id=?');$st->execute([(int)$_GET['edit']]);$edit=$st->fetch();}
-if(isset($_GET['delete'])){$st=$pdo->prepare('DELETE FROM tours WHERE id=?');$st->execute([(int)$_GET['delete']]);header('Location:tours.php');exit;}
+if(isset($_GET['delete'])){$id=(int)$_GET['delete'];$st=$pdo->prepare('SELECT image FROM tours WHERE id=?');$st->execute([$id]);$path=$st->fetchColumn();if($path!==false)delete_stored_image($path);$st=$pdo->prepare('DELETE FROM tours WHERE id=?');$st->execute([$id]);header('Location:tours.php');exit;}
 if($_SERVER['REQUEST_METHOD']==='POST'){
  try{
   $id=(int)($_POST['id']??0);$old=$id?($pdo->query('SELECT image FROM tours WHERE id='.$id)->fetchColumn()):null;

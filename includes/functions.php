@@ -10,54 +10,16 @@ function save_setting($key,$value){
  global $pdo;
  $pdo->prepare('INSERT INTO settings(name,value) VALUES(?,?) ON DUPLICATE KEY UPDATE value=VALUES(value)')->execute([$key,$value]);
 }
+require_once __DIR__.'/storage.php';
 function site_image($path,$fallback='assets/img/placeholder.svg'){
  $relative=str_replace('\\','/',trim((string)$path));
+ $asset=static fn($value)=>str_starts_with((string)$value,'/')?(string)$value:'/'.ltrim((string)$value,'/');
  if(str_starts_with($relative,'s3://')){
-  try{return bucket_presigned_url(substr($relative,5));}catch(Throwable $e){return $fallback;}
+  $key=substr($relative,5);if(!valid_bucket_image_key($key))return $asset($fallback);
+  return '/media.php?key='.rawurlencode($key);
  }
- if($relative==='' || str_starts_with($relative,'/') || preg_match('~(?:^|/)\.\.(?:/|$)~',$relative)) return $fallback;
- return is_file(dirname(__DIR__).'/'.$relative) ? $relative : $fallback;
-}
-function bucket_config(){
- $cfg=['bucket'=>getenv('EVE_S3_BUCKET')?:'','key'=>getenv('EVE_S3_ACCESS_KEY_ID')?:'','secret'=>getenv('EVE_S3_SECRET_ACCESS_KEY')?:'','region'=>getenv('EVE_S3_REGION')?:'auto','endpoint'=>rtrim(getenv('EVE_S3_ENDPOINT')?:'','/')];
- if(!$cfg['bucket']||!$cfg['key']||!$cfg['secret']||!$cfg['endpoint']) throw new RuntimeException('Image bucket is not configured.');
- return $cfg;
-}
-function bucket_signing_key($secret,$date,$region){
- $dateKey=hash_hmac('sha256',$date,'AWS4'.$secret,true);
- $regionKey=hash_hmac('sha256',$region,$dateKey,true);
- $serviceKey=hash_hmac('sha256','s3',$regionKey,true);
- return hash_hmac('sha256','aws4_request',$serviceKey,true);
-}
-function bucket_object_url($key){
- $cfg=bucket_config();$endpoint=parse_url($cfg['endpoint']);
- if(!$endpoint||empty($endpoint['host'])||($endpoint['scheme']??'')!=='https') throw new RuntimeException('Image bucket endpoint is invalid.');
- $host=$cfg['bucket'].'.'.$endpoint['host'];
- $prefix=trim($endpoint['path']??'','/');
- $uri='/'.($prefix!==''?rawurlencode($prefix).'/':'').implode('/',array_map('rawurlencode',explode('/',$key)));
- return [$cfg,$host,$uri];
-}
-function bucket_presigned_url($key){
- if(!preg_match('~^(reviews|tours|hero)/[a-z0-9_-]+\.(jpg|png|webp)$~i',$key)) throw new RuntimeException('Invalid bucket image key.');
- [$cfg,$host,$uri]=bucket_object_url($key);$now=gmdate('Ymd\THis\Z');$date=substr($now,0,8);$scope="$date/{$cfg['region']}/s3/aws4_request";
- $params=['X-Amz-Algorithm'=>'AWS4-HMAC-SHA256','X-Amz-Credential'=>$cfg['key'].'/'.$scope,'X-Amz-Date'=>$now,'X-Amz-Expires'=>'3600','X-Amz-SignedHeaders'=>'host'];
- ksort($params);$query=http_build_query($params,'','&',PHP_QUERY_RFC3986);$canonical="GET\n{$uri}\n{$query}\nhost:{$host}\n\nhost\nUNSIGNED-PAYLOAD";
- $toSign="AWS4-HMAC-SHA256\n{$now}\n{$scope}\n".hash('sha256',$canonical);$signature=hash_hmac('sha256',$toSign,bucket_signing_key($cfg['secret'],$date,$cfg['region']));
- return $cfg['endpoint']?preg_replace('~^(https?://)[^/]+~','$1'.$host,$cfg['endpoint']).$uri.'?'.$query.'&X-Amz-Signature='.$signature:'https://'.$host.$uri.'?'.$query.'&X-Amz-Signature='.$signature;
-}
-function bucket_request($method,$key,$body='',$contentType='application/octet-stream'){
- [$cfg,$host,$uri]=bucket_object_url($key);$now=gmdate('Ymd\THis\Z');$date=substr($now,0,8);$payloadHash=hash('sha256',$body);
- $headers=['content-type'=>$contentType,'host'=>$host,'x-amz-content-sha256'=>$payloadHash,'x-amz-date'=>$now];ksort($headers);
- $canonicalHeaders='';foreach($headers as $name=>$value)$canonicalHeaders.=$name.':'.$value."\n";
- $signedHeaders=implode(';',array_keys($headers));$canonical="$method\n{$uri}\n\n{$canonicalHeaders}{$signedHeaders}\n{$payloadHash}";
- $scope="$date/{$cfg['region']}/s3/aws4_request";$toSign="AWS4-HMAC-SHA256\n{$now}\n{$scope}\n".hash('sha256',$canonical);$signature=hash_hmac('sha256',$toSign,bucket_signing_key($cfg['secret'],$date,$cfg['region']));
- $authorization='AWS4-HMAC-SHA256 Credential='.$cfg['key'].'/'.$scope.', SignedHeaders='.$signedHeaders.', Signature='.$signature;
- $url=preg_replace('~^(https?://)[^/]+~','$1'.$host,$cfg['endpoint']).$uri;
- $curl=curl_init($url);curl_setopt_array($curl,[CURLOPT_CUSTOMREQUEST=>$method,CURLOPT_RETURNTRANSFER=>true,CURLOPT_HTTPHEADER=>['Authorization: '.$authorization,'Content-Type: '.$contentType,'Host: '.$host,'x-amz-content-sha256: '.$payloadHash,'x-amz-date: '.$now],CURLOPT_TIMEOUT=>30]);
- if($method==='PUT')curl_setopt($curl,CURLOPT_POSTFIELDS,$body);
- $response=curl_exec($curl);$status=(int)curl_getinfo($curl,CURLINFO_RESPONSE_CODE);$error=curl_error($curl);curl_close($curl);
- if($response===false||$status<200||$status>=300)throw new RuntimeException('Image bucket request failed (HTTP '.$status.').'.($error?' '.$error:''));
- return true;
+ if($relative==='' || str_starts_with($relative,'/') || preg_match('~(?:^|/)\.\.(?:/|$)~',$relative)) return $asset($fallback);
+ return is_file(dirname(__DIR__).'/'.$relative) ? $asset($relative) : $asset($fallback);
 }
 function ensure_generated_id_columns(){
  global $pdo;

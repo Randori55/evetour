@@ -1,3 +1,5 @@
 backup.sql
 .git
 .git/**
+
+/vendor

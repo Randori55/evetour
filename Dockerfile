@@ -7,7 +7,13 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
 COPY php/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
 
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /var/www/html
+COPY composer.json composer.lock ./
+RUN apt-get update && apt-get install -y --no-install-recommends unzip && rm -rf /var/lib/apt/lists/*
+RUN composer install --no-dev --no-interaction --prefer-dist --classmap-authoritative
+
 COPY . /var/www/html/
 COPY uploads/ /opt/evetour-default-uploads/
 
